@@ -39,10 +39,39 @@ _WORD_POOL = (
     "encrypt", "decrypt", "archive", "snapshot", "telemetry", "beacon",
 )
 
+# Low-level slang / syntax token pool. Supplements _WORD_POOL (objects) with
+# control-flow keywords and kernel/syscall jargon used to stitch pseudo-logical
+# technical traces. Existing _WORD_POOL entries are intentionally preserved.
+_SYNTAX_SLANG_POOL = (
+    "if", "then", "else", "end", "while", "loop", "true", "false", "and",
+    "with", "from", "into", "upon", "via", "under", "over", "null", "none",
+    "void", "return", "status", "check", "error", "valid", "ioctl", "syscall",
+    "mutex", "malloc", "free", "ptrace", "fork", "exec", "init", "panic",
+    "dump", "stack", "trace", "alloc", "kill", "pipe", "inode", "mount",
+    "sysfs", "proc", "reboot", "uaf", "rop", "leak",
+)
+
+# Grammar patterns for pseudo-logical cover-text assembly.
+#   S = syntax/slang token (_SYNTAX_SLANG_POOL)
+#   O = object token (_WORD_POOL)
+# Pattern A: S O S O S S  -> e.g. "if mutex and pipe then panic"
+# Pattern B: O O S O S O  -> e.g. "process stream via protocol into buffer"
+# Pattern C: S O S O S O S -> e.g. "while state over latency check core end"
+_COVER_GRAMMAR_PATTERNS = (
+    ("S", "O", "S", "O", "S", "S"),
+    ("O", "O", "S", "O", "S", "O"),
+    ("S", "O", "S", "O", "S", "O", "S"),
+)
+
 
 def _generate_cover_text():
-    n = secrets.choice(range(6, 11))
-    words = [secrets.choice(_WORD_POOL) for _ in range(n)]
+    pattern = secrets.choice(_COVER_GRAMMAR_PATTERNS)
+    words = []
+    for slot in pattern:
+        if slot == "S":
+            words.append(secrets.choice(_SYNTAX_SLANG_POOL))
+        else:
+            words.append(secrets.choice(_WORD_POOL))
     return ' '.join(words).capitalize() + '.'
 
 
